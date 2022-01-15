@@ -1,0 +1,6 @@
+*.DS_Store
+# Ignore IDE configs
+/.idea/
+/.vscode/
+
+/node_modules/
