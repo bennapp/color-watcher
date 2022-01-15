@@ -1,0 +1,16 @@
+{
+  "name": "color-watcher",
+  "version": "1.0.0",
+  "main": "main.js",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^16.0.7"
+  },
+  "dependencies": {
+    "electron-rebuild": "^3.2.7",
+    "robotjs": "^0.6.0"
+  },
+  "scripts": {
+    "start": "electron ."
+  }
+}
