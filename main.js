@@ -68,25 +68,24 @@ ipc.on('poll', event => {
 
   [...Array(numCols)].forEach((_, numCol) => {
     [...Array(numRows)].forEach((_, numRow) => {
-      const x = (numCol * size);
-      const y = (numRow * size);
+      // only check border tiles
+      if (numCol === 0 || (numRow === 0 || numRow === numRows -1)) {
+        const x = (numCol * size);
+        const y = (numRow * size);
 
-      console.log(x, y)
-      const color = robotjs.getPixelColor(y, x)
-      console.log(color)
-      event.sender.send('color', `${numCol}:${numRow}:${color}`)
-
-      // const img = robotjs.screen.capture(y, x, size, size);
-      // const multi = img.width / size;
-      // const color1 = img.colorAt(parseInt((size * 0.25)) * multi, parseInt((size * 0.25)) * multi);
-      // const color2 = img.colorAt(parseInt((size * 0.25)) * multi, parseInt((size * 0.75)) * multi);
-      // const color3 = img.colorAt(parseInt((size * 0.50)) * multi, parseInt((size * 0.50)) * multi);
-      // const color4 = img.colorAt(parseInt((size * 0.75)) * multi, parseInt((size * 0.25)) * multi);
-      // const color5 = img.colorAt(parseInt((size * 0.75)) * multi, parseInt((size * 0.75)) * multi);
-      // const color = colorAverage([color1, color2, color3, color4, color5]);
-      // console.log([color1, color2, color3, color4, color5])
-
-      event.sender.send('color', `${numCol}:${numRow}:${color}`)
+        const color = robotjs.getPixelColor(y, x)
+        event.sender.send('color', `${numCol}:${numRow}:${color}`)
+  
+        // const img = robotjs.screen.capture(y, x, size, size);
+        // const multi = img.width / size;
+        // const color1 = img.colorAt(parseInt((size * 0.25)) * multi, parseInt((size * 0.25)) * multi);
+        // const color2 = img.colorAt(parseInt((size * 0.25)) * multi, parseInt((size * 0.75)) * multi);
+        // const color3 = img.colorAt(parseInt((size * 0.50)) * multi, parseInt((size * 0.50)) * multi);
+        // const color4 = img.colorAt(parseInt((size * 0.75)) * multi, parseInt((size * 0.25)) * multi);
+        // const color5 = img.colorAt(parseInt((size * 0.75)) * multi, parseInt((size * 0.75)) * multi);
+        // const color = colorAverage([color1, color2, color3, color4, color5]);
+        // event.sender.send('color', `${numCol}:${numRow}:${color}`)
+      }
     });
   });
 });
