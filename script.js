@@ -2,11 +2,11 @@ const ipc = require("electron").ipcRenderer;
 
 ipc.send('start')
 
-ipc.on('screenSize', (event, msg) => {
+ipc.on('screenSize', (event, msg, size) => {
   const width = msg.width;
   const height = msg.height;
-  const numRows = parseInt(width / 100) - 1;
-  const numCols = parseInt(height / 100) - 1;
+  const numRows = parseInt(width / size) - 1;
+  const numCols = parseInt(height / size) - 1;
 
   const grid = document.getElementById('grid');
 
