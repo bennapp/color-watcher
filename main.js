@@ -9,8 +9,8 @@ const ipc = require("electron").ipcMain;
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 2000,
-    height: 1400,
+    width: 1200,
+    height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: true,
@@ -22,7 +22,7 @@ function createWindow () {
   mainWindow.loadFile('index.html')
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -38,11 +38,15 @@ app.whenReady().then(() => {
   })
 })
 
-const size = 100;
+// const ledPerInch = 0.656;
+// const monitorDimensions = [14.27, 24.11, 14.27];
+// const ledDimensions = [9.36112, 15.81616, 9.36112];
+const ledDimensions = [9, 15, 9];
+const numRows = ledDimensions[0];
+const numCols = ledDimensions[1];
 
 ipc.on('start', event => {
-  const screenSize = robotjs.getScreenSize();
-  event.sender.send('screenSize', screenSize, size);
+  event.sender.send('screenSize', numRows, numCols);
 })
 
 function toHex(num) {
@@ -59,35 +63,59 @@ function colorAverage(arrayOfColors) {
   return avgColorHex;
 }
 
-ipc.on('poll', event => {
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+ipc.on('poll', async event => {
   const screenSize = robotjs.getScreenSize();
   const width = screenSize.width;
   const height = screenSize.height;
-  const numRows = parseInt(width / size) - 1;
-  const numCols = parseInt(height / size) - 1;
 
-  [...Array(numCols)].forEach((_, numCol) => {
-    [...Array(numRows)].forEach((_, numRow) => {
-      // only check border tiles
-      if (numCol === 0 || (numRow === 0 || numRow === numRows -1)) {
-        const x = (numCol * size);
-        const y = (numRow * size);
+  const heightSize = height / numRows
+  const widthSize = width / numCols
 
-        const color = robotjs.getPixelColor(y, x)
-        event.sender.send('color', `${numCol}:${numRow}:${color}`)
-  
-        // const img = robotjs.screen.capture(y, x, size, size);
-        // const multi = img.width / size;
-        // const color1 = img.colorAt(parseInt((size * 0.25)) * multi, parseInt((size * 0.25)) * multi);
-        // const color2 = img.colorAt(parseInt((size * 0.25)) * multi, parseInt((size * 0.75)) * multi);
-        // const color3 = img.colorAt(parseInt((size * 0.50)) * multi, parseInt((size * 0.50)) * multi);
-        // const color4 = img.colorAt(parseInt((size * 0.75)) * multi, parseInt((size * 0.25)) * multi);
-        // const color5 = img.colorAt(parseInt((size * 0.75)) * multi, parseInt((size * 0.75)) * multi);
-        // const color = colorAverage([color1, color2, color3, color4, color5]);
-        // event.sender.send('color', `${numCol}:${numRow}:${color}`)
-      }
+  let ledData, x, y;
+  while(true) {
+    ledData = []
+
+    // do right side from bottom to top
+    x = width - 50;
+    y = height - 50;
+    const rightSideData = [...Array(numRows - 1)].map(() => {
+      const color = robotjs.getPixelColor(x, y)
+      y -= heightSize;
+      return color;
     });
-  });
+    ledData = ledData.concat(rightSideData)
+
+    // do top from right to left
+    x = width - 50;
+    y = 50;
+    const topData = [...Array(numCols)].map(() => {
+      const color = robotjs.getPixelColor(x, y)
+      x -= widthSize;
+      return color;
+    });
+    ledData = ledData.concat(topData)
+
+    // do left from top to bottom
+    x = 50;
+    y = 50;
+    const leftSideData = [...Array(numRows - 1)].map(() => {
+      const color = robotjs.getPixelColor(x, y)
+      y += heightSize;
+      return color;
+    });
+    ledData = ledData.concat(leftSideData)
+
+    // send ledData
+    console.log(ledData);
+    console.log(ledData.length);
+    event.sender.send('color', ledData)
+
+    await sleep(200);
+  };
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

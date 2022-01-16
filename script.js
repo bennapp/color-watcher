@@ -2,46 +2,25 @@ const ipc = require("electron").ipcRenderer;
 
 ipc.send('start')
 
-ipc.on('screenSize', (event, msg, size) => {
-  const width = msg.width;
-  const height = msg.height;
-  const numRows = parseInt(width / size) - 1;
-  const numCols = parseInt(height / size) - 1;
-
+ipc.on('screenSize', (event, numRows, numCols) => {
   const grid = document.getElementById('grid');
+  const row = document.createElement('div');
+  row.setAttribute('class', 'row');
+  grid.append(row);
 
-  [...Array(numCols)].forEach((_, numCol) => {
-    const row = document.createElement('div');
-    row.setAttribute('class', 'row');
-    grid.append(row);
-
-    [...Array(numRows)].forEach((_, numRow) => {
-      const color = document.createElement('div');
-      color.setAttribute('class', 'color')
-      color.setAttribute('id', `${numCol}:${numRow}`);
-      row.append(color);
-    })
+  [...Array(numCols + numRows + numRows - 2)].forEach((_, i) => {
+    const color = document.createElement('div');
+    color.setAttribute('class', 'color')
+    color.setAttribute('id', i);
+    row.append(color);
   })
 
-  setInterval(() => {
-    ipc.send('poll');
-  }, 1000)
+  ipc.send('poll');
 });
 
-// ipc.on('img', (event, msg) => {
-//   const img = document.getElementById('img');
-//   console.log(msg)
-//   img.src = URL.createObjectURL(
-//     new Blob([msg.buffer], { type: 'image/png' } /* (1) */)
-//   );
-// });
-
-ipc.on('color', (event, msg) => {
-  const msgSplit = msg.split(':')
-  const x = msgSplit[0]
-  const y = msgSplit[1]
-  const color = msgSplit[2];
-
-  const colorEl = document.getElementById(`${x}:${y}`);
-  colorEl.style.backgroundColor = "#" + color
+ipc.on('color', (event, colorData) => {
+  colorData.reverse().map((color, i) => {
+    const colorEl = document.getElementById(i);
+    colorEl.style.backgroundColor = "#" + color;
+  })
 });
