@@ -5,6 +5,9 @@ const { app, BrowserWindow } = require('electron')
 const path = require('path')
 const robotjs = require('robotjs')
 const ipc = require("electron").ipcMain;
+const SerialPort = require('serialport');
+
+app.allowRendererProcessReuse=false;
 
 function createWindow () {
   // Create the browser window.
@@ -38,6 +41,21 @@ app.whenReady().then(() => {
   })
 })
 
+var serialPort = new SerialPort('COM4', { baudRate: 9600 });
+let portIsOpen = false; 
+
+serialPort.on("open", function () {
+  portIsOpen = true;
+  // serialPort.write(`1:255:0:255`);
+  // serialPort.write(`5:0:0:255`);
+  // serialPort.write(`6:255:0:0`);
+});
+
+serialPort.on('data', function (data) {
+  console.log('Data:', String(data))
+})
+
+
 // const ledPerInch = 0.656;
 // const monitorDimensions = [14.27, 24.11, 14.27];
 // const ledDimensions = [9.36112, 15.81616, 9.36112];
@@ -52,6 +70,14 @@ ipc.on('start', event => {
 function toHex(num) {
   return parseInt(num).toString(16);
 }
+
+function rgbFromHex(color) {
+  const r = parseInt(color.substring(0, 2), 16)
+  const g = parseInt(color.substring(2, 4), 16)
+  const b = parseInt(color.substring(4, 6), 16)
+
+  return [r, g, b]
+};
 
 function colorAverage(arrayOfColors) {
   const avgRed = arrayOfColors.reduce((sum, hexString) => { return sum + parseInt(hexString.substring(0, 2), 16) }, 0) / arrayOfColors.length
@@ -109,12 +135,18 @@ ipc.on('poll', async event => {
     });
     ledData = ledData.concat(leftSideData)
 
-    // send ledData
-    console.log(ledData);
-    console.log(ledData.length);
-    event.sender.send('color', ledData)
+    // event.sender.send('color', ledData)
+    if (portIsOpen) {
+      ledDataString = ledData.map((color, i) => {
+        const rgb = rgbFromHex(color);
+        return `${i}:${rgb[0]}:${rgb[1]}:${rgb[2]}`;
+      })
 
-    await sleep(200);
+      //console.log('fromjs:', ledDataString.join('|'))
+      serialPort.write(ledDataString.join('|'));
+    }
+
+    await sleep(1000);
   };
 });
 
