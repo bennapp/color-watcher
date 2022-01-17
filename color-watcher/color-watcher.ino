@@ -90,7 +90,7 @@ void loop() {
       
       strip.show();
     }
-    Serial.print("FREE");
+    // Serial.print("FREE"); 
   }
   
   // Fill along the length of the strip in various colors...

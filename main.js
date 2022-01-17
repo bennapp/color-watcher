@@ -75,48 +75,54 @@ async function poll() {
   const widthSize = width / numCols
 
   let ledData, x, y;
-  while(true) {
-    ledData = []
-
+  ledData = []
+  function loop() {
     // do right side from bottom to top
     x = width - 100;
     y = height - 100;
-    const rightSideData = [...Array(numRows - 1)].map(() => {
+    [...Array(numRows - 1)].forEach((el, i) => {
       const color = getColorAverage(x, y)
       y -= heightSize;
-      return color;
+      ledData[i] = color;
     });
-    ledData = ledData.concat(rightSideData)
 
     // do top from right to left
     x = width - 100;
     y = 100;
-    const topData = [...Array(numCols - 1)].map(() => {
+    [...Array(numCols - 1)].forEach((el, i) => {
       const color = getColorAverage(x, y)
       x -= widthSize;
-      return color;
+      ledData[i + numRows - 1] = color
     });
-    ledData = ledData.concat(topData)
 
     // do left from top to bottom
     x = 100;
     y = 100;
-    const leftSideData = [...Array(numRows - 1)].map(() => {
+    [...Array(numRows - 1)].forEach((el, i) => {
       const color = getColorAverage(x, y)
       y += heightSize;
       return color;
+      ledData[i + numRows - 1 + numCols] = color
     });
-    ledData = ledData.concat(leftSideData)
-    
-    if (portIsOpen) {
-      while(busy){
-        console.log('waiting')
-        await sleep(20);
-      }
-      serialPort.write(ledData.join(''));
-      busy = true;
+
+    function writeData() {
+      if (portIsOpen) {
+        console.log(ledData.join(''))
+        serialPort.write(ledData.join(''), (err) => {
+          if (err) {
+            console.log('Error on write: ', err.message)
+          }
+          console.log('write data')
+          writeData();
+        });
+      } 
     }
-  };
+
+    writeData();
+    loop();
+  }
+
+  loop();
 }
 
 poll();
