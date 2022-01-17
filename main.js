@@ -8,13 +8,18 @@ app.allowRendererProcessReuse = false;
 
 var serialPort = new SerialPort('COM4', { baudRate: 9600 });
 let portIsOpen = false;
+let busy = false;
 
 serialPort.on("open", function () {
   portIsOpen = true;
 });
 
 serialPort.on('data', function (d) {
-  console.log('Data:', String(d))
+  const data = String(d)
+  if (data === "FREE") {
+    busy = false;
+  }
+  console.log('Data:', data)
 })
 
 const ledDimensions = [22, 37];
@@ -48,6 +53,8 @@ function sleep(ms) {
 }
 
 async function poll() {
+  await sleep(1000);
+
   const screenSize = robotjs.getScreenSize();
   const width = screenSize.width;
   const height = screenSize.height;
@@ -109,11 +116,17 @@ async function poll() {
 
       console.log('fromjs:', firstHalfLedDataString.join('|') + "0")
       serialPort.write(firstHalfLedDataString.join('|') + "0");
-
-      await sleep(300);
+      busy = true;
+      while(busy){
+        await sleep(1);
+      }
 
       console.log('fromjs:', secondHalfLedDataString.join('|') + "0")
       serialPort.write(secondHalfLedDataString.join('|') + "0");
+      busy = true;
+      while(busy){
+        await sleep(1);
+      }
     }
   };
 }
