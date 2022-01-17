@@ -20,7 +20,7 @@
 #define LED_PIN    6
 
 // How many NeoPixels are attached to the Arduino?
-#define LED_COUNT 60
+#define LED_COUNT 81
 
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -48,8 +48,6 @@ void setup() {
   strip.show();            // Turn OFF all pixels ASAP
   strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
 
-  Serial.print("hello");
-
   Serial.begin(9600);
 }
 
@@ -62,6 +60,8 @@ void loop() {
       String incomingString = Serial.readString();
       char str_array[incomingString.length()];
       incomingString.toCharArray(str_array, incomingString.length());
+
+      Serial.println(incomingString);
       
       if(strcmp(str_array, "END") == 0) {
         strip.show();
@@ -78,10 +78,11 @@ void loop() {
           int g = atoi(strtok_r(NULL, ":", &saveptr2));
           int b = atoi(strtok_r(NULL, ":", &saveptr2)) / 10;
 
-          Serial.println(index);
-          Serial.println(r);
-          Serial.println(g);
-          Serial.println(b);
+//          Serial.println(index);
+//          Serial.println(r);
+//          Serial.println(g);
+//          Serial.println(b);
+//          Serial.println();
       
           strip.setPixelColor(index, r, g, b);  
 
@@ -91,8 +92,6 @@ void loop() {
       }
     }
   }
-
-  delay(1);
   
   // Fill along the length of the strip in various colors...
   // colorWipe(strip.Color(255,   0,   0), 50); // Red
