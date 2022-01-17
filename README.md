@@ -8,4 +8,7 @@ turns this:
 into this:
 ![Screen Shot 2022-01-15 at 12 12 42 PM](https://user-images.githubusercontent.com/2433091/149634944-d5845bd8-c080-4eb4-84ff-3a13bfdaedbf.png)
 
-TODO: connect color data to a rgb strip
+and then into this:
+
+![colorwatcher](https://user-images.githubusercontent.com/2433091/149700996-3b285906-9d0f-4578-87a6-166ddb252196.jpg)
+
