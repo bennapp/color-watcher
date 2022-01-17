@@ -49,63 +49,60 @@ void setup() {
   strip.setBrightness(90); // Set BRIGHTNESS to about 1/5 (max = 255)
 
   Serial.begin(9600);
-  Serial.setTimeout(1);
+  // Serial.setTimeout(1);
 }
 
-
-// loop() function -- runs repeatedly as long as board is on ---------------
+const int BUFFER_SIZE = 8;
+char buf[BUFFER_SIZE];
 
 void loop() {
   if(Serial.available()){
     while(Serial.available() > 0){
-      String incomingString = Serial.readString();
-      char str_array[incomingString.length()];
-      incomingString.toCharArray(str_array, incomingString.length());
+      Serial.readBytes(buf, BUFFER_SIZE);
 
-      // Serial.println(incomingString);
+      char *rptr;
+      char *gptr;
+      char *bptr;
+      char *iptr;
 
-      int i = 0;
-      int index = 0;
-      while(i < strlen(str_array)) {
-        char *rptr;
-        char *gptr;
-        char *bptr;
-        long r;
-        long g;
-        long b;
-        char str[2];
+      long r;
+      long g;
+      long b;
+      long i;
+      char str[2];
 
-        strncpy(str, (str_array + i), 2);
-        r = strtol(str, &rptr, 16);
+      strncpy(str, buf, 2);
+      r = strtol(str, &rptr, 16);
+      strncpy(str, &buf[2], 2);
+      g = strtol(str, &gptr, 16);
+      strncpy(str, &buf[4], 2);
+      b = strtol(str, &bptr, 16);
+      strncpy(str, &buf[6], 2);
+      i = strtol(str, &iptr, 16);
 
-        strncpy(str, (str_array + i + 2), 2);
-        g = strtol(str, &gptr, 16);
-
-        strncpy(str, (str_array + i + 4), 2);
-        b = strtol(str, &bptr, 16);
-
-        strip.setPixelColor(index, r, g, b);
-        i += 6;
-        index +=1;
-      }
-      
-      strip.show();
+      strip.setPixelColor(i, r, g, b);
+      // colorFade(i, r, g, b);
     }
-    // Serial.print("FREE"); 
+    
+    strip.show();
   }
-  
-  // Fill along the length of the strip in various colors...
-  // colorWipe(strip.Color(255,   0,   0), 50); // Red
-  // colorWipe(strip.Color(  0, 255,   0), 50); // Green
-  // colorWipe(strip.Color(  0,   0, 255), 50); // Blue
+}
 
-  // Do a theater marquee effect in various colors...
-  // theaterChase(strip.Color(127, 127, 127), 50); // White, half brightness
-  // theaterChase(strip.Color(127,   0,   0), 50); // Red, half brightness
-  // theaterChase(strip.Color(  0,   0, 127), 50); // Blue, half brightness
+void colorFade(uint8_t i, uint8_t r, uint8_t g, uint8_t b) {
+    uint8_t startR, startG, startB;
+    uint32_t startColor = strip.getPixelColor(i); // get the current colour
+    startB = startColor & 0xFF;
+    startG = (startColor >> 8) & 0xFF;
+    startR = (startColor >> 16) & 0xFF;  // separate into RGB components
 
-  // rainbow(10);             // Flowing rainbow cycle along the whole strip
-  // theaterChaseRainbow(50); // Rainbow-enhanced theaterChase variant
+    if ((startR != r) || (startG != g) || (startB != b)){  // while the curr color is not yet the target color
+      if (startR < r) startR++; else if (startR > r) startR--;  // increment or decrement the old color values
+      if (startG < g) startG++; else if (startG > g) startG--;
+      if (startB < b) startB++; else if (startB > b) startB--;
+      strip.setPixelColor(i, startR, startG, startB);  // set the color
+      strip.show();
+      // delay(1);  // add a delay if its too fast
+    }
 }
 
 

@@ -23,10 +23,8 @@ const height = screenSize.height;
 const heightSize = height / numRows
 const widthSize = width / numCols
 
-const ledData = []
-
 function toHex(num) {
-  return parseInt(num).toString(16);
+  return parseInt(num).toString(16).padStart(2, '0');
 }
 
 function rgbFromHex(color) {
@@ -65,8 +63,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function readData() {
-  // var start = new Date().getTime();
+async function readData() {
   const screenImage = robotjs.screen.capture();
   const multiX = screenImage.width / width;
   const multiY = screenImage.height / height;
@@ -75,48 +72,51 @@ function readData() {
   // do right side from bottom to top
   x = width - 100;
   y = height - 100;
-  [...Array(numRows - 1)].forEach((el, i) => {
+  for (let i = 0; i < (numRows - 1); i++) {
     const color = getColorAverage(x, y, screenImage, multiX, multiY)
+    const index = i;
+    
+    writeData(color + toHex(index));
+    await sleep(1);
+
     y -= heightSize;
-    ledData[i] = color;
-  });
+  }
 
   // do top from right to left
   x = width - 100;
   y = 100;
-  [...Array(numCols - 1)].forEach((el, i) => {
+  for (let i = 0; i < (numCols - 1); i++) {
     const color = getColorAverage(x, y, screenImage, multiX, multiY)
+    const index = i + numRows - 1;
+    
+    writeData(color + toHex(index));
+    await sleep(1);
+
     x -= widthSize;
-    ledData[i + numRows - 1] = color
-  });
+  }
 
   // do left from top to bottom
   x = 100;
   y = 100;
-  [...Array(numRows - 1)].forEach((el, i) => {
+  for (let i = 0; i < (numRows - 1); i++) {
     const color = getColorAverage(x, y, screenImage, multiX, multiY)
+    const index = i + numRows - 2 + numCols;
+    
+    writeData(color + toHex(index));
+    await sleep(1);
+
     y += heightSize;
-      ledData[i + numRows - 2 + numCols] = color
-  });
-  
-  // var elapsed = new Date().getTime() - start;
-  // console.log("time reading", elapsed)
+  }
 }
 
-function writeData() {
-  const message = ledData.join('')
-  // var start = new Date().getTime();
-  serialPort.write(message, () => {
-    // var elapsed = new Date().getTime() - start;
-    // console.log("time write", elapsed)
-  });
+function writeData(data) {
+  // console.log('writing', data)
+  serialPort.write(data);
 }
 
 serialPort.on("open", async function () {
   while(true){
-    readData()
-    writeData()
-    await sleep(1);
+    await readData();
   }
 });
 
