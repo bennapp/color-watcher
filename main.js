@@ -6,25 +6,24 @@ const SerialPort = require('serialport');
 
 app.allowRendererProcessReuse = false;
 
-var serialPort = new SerialPort('COM4', { baudRate: 9600 });
-let portIsOpen = false;
-let busy = false;
-
-serialPort.on("open", function () {
-  portIsOpen = true;
-});
+const serialPort = new SerialPort('COM4', { baudRate: 9600 });
 
 serialPort.on('data', function (d) {
   const data = String(d)
-  if (data === "FREE") {
-    busy = false;
-  }
   console.log('Data:', data)
 })
 
 const ledDimensions = [22, 37];
 const numRows = ledDimensions[0];
 const numCols = ledDimensions[1];
+const screenSize = robotjs.getScreenSize();
+const width = screenSize.width;
+const height = screenSize.height;
+
+const heightSize = height / numRows
+const widthSize = width / numCols
+
+const ledData = []
 
 function toHex(num) {
   return parseInt(num).toString(16);
@@ -39,12 +38,12 @@ function rgbFromHex(color) {
 };
 
 function getColorAverage(x, y) {
-  const color1 = robotjs.getPixelColor(x - 25, y - 25);
-  const color2 = robotjs.getPixelColor(x + 25, y - 25);
+  //const color1 = robotjs.getPixelColor(x - 25, y - 25);
+  //const color2 = robotjs.getPixelColor(x + 25, y - 25);
   const color3 = robotjs.getPixelColor(x, y);
-  const color4 = robotjs.getPixelColor(x - 25, y  + 25);
-  const color5 = robotjs.getPixelColor(x + 25, y + 25);
-  const arrayOfColors = [color1, color2, color3, color4, color5];
+  //const color4 = robotjs.getPixelColor(x - 25, y  + 25);
+  // const color5 = robotjs.getPixelColor(x + 25, y + 25);
+  // const arrayOfColors = [color1, color2, color3, color4, color5];
 
   // return colorAverage(arrayOfColors)
   return color3;
@@ -64,70 +63,67 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function poll() {
-  await sleep(1000);
+async function readData() {
+  console.log('reading')
+  var start = new Date().getTime();
+  let x, y;
 
-  const screenSize = robotjs.getScreenSize();
-  const width = screenSize.width;
-  const height = screenSize.height;
+  // do right side from bottom to top
+  x = width - 100;
+  y = height - 100;
+  [...Array(numRows - 1)].forEach((el, i) => {
+    const color = getColorAverage(x, y)
+    y -= heightSize;
+    ledData[i] = color;
+  });
 
-  const heightSize = height / numRows
-  const widthSize = width / numCols
+  // do top from right to left
+  x = width - 100;
+  y = 100;
+  [...Array(numCols - 1)].forEach((el, i) => {
+    const color = getColorAverage(x, y)
+    x -= widthSize;
+    ledData[i + numRows - 1] = color
+  });
 
-  let ledData, x, y;
-  ledData = []
-  function loop() {
-    // do right side from bottom to top
-    x = width - 100;
-    y = height - 100;
-    [...Array(numRows - 1)].forEach((el, i) => {
-      const color = getColorAverage(x, y)
-      y -= heightSize;
-      ledData[i] = color;
-    });
+  // do left from top to bottom
+  x = 100;
+  y = 100;
+  [...Array(numRows - 1)].forEach((el, i) => {
+    const color = getColorAverage(x, y)
+    y += heightSize;
+      ledData[i + numRows - 2 + numCols] = color
+  });
+  
+  var elapsed = new Date().getTime() - start;
+  console.log("time reading", elapsed)
 
-    // do top from right to left
-    x = width - 100;
-    y = 100;
-    [...Array(numCols - 1)].forEach((el, i) => {
-      const color = getColorAverage(x, y)
-      x -= widthSize;
-      ledData[i + numRows - 1] = color
-    });
+  await sleep(20);
 
-    // do left from top to bottom
-    x = 100;
-    y = 100;
-    [...Array(numRows - 1)].forEach((el, i) => {
-      const color = getColorAverage(x, y)
-      y += heightSize;
-      return color;
-      ledData[i + numRows - 1 + numCols] = color
-    });
-
-    function writeData() {
-      if (portIsOpen) {
-        console.log(ledData.join(''))
-        serialPort.write(ledData.join(''), (err) => {
-          if (err) {
-            console.log('Error on write: ', err.message)
-          }
-          console.log('write data')
-          writeData();
-        });
-      } 
-    }
-
-    writeData();
-    loop();
-  }
-
-  loop();
+  readData();
 }
 
-poll();
+async function writeData() {
+  console.log('writing')
+  const message = ledData.join('')
+  console.log(message)
+  var start = new Date().getTime();
+  serialPort.write(message, () => {
+    var elapsed = new Date().getTime() - start;
+    console.log("time write", elapsed)
+  });
 
-// ipc.on('poll');
+  await sleep(700);
+
+  writeData();
+}
+
+serialPort.on("open", async function () {
+  await Promise.all([
+    readData(),
+    writeData(),
+  ]);
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits

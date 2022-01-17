@@ -61,7 +61,7 @@ void loop() {
       char str_array[incomingString.length()];
       incomingString.toCharArray(str_array, incomingString.length());
 
-      // Serial.println(incomingString);
+      Serial.println(incomingString);
 
       int i = 0;
       int index = 0;
