@@ -38,6 +38,18 @@ function rgbFromHex(color) {
   return [r, g, b]
 };
 
+function getColorAverage(x, y) {
+  const color1 = robotjs.getPixelColor(x - 25, y - 25);
+  const color2 = robotjs.getPixelColor(x + 25, y - 25);
+  const color3 = robotjs.getPixelColor(x, y);
+  const color4 = robotjs.getPixelColor(x - 25, y  + 25);
+  const color5 = robotjs.getPixelColor(x + 25, y + 25);
+  const arrayOfColors = [color1, color2, color3, color4, color5];
+
+  // return colorAverage(arrayOfColors)
+  return color3;
+}
+
 function colorAverage(arrayOfColors) {
   const avgRed = arrayOfColors.reduce((sum, hexString) => { return sum + parseInt(hexString.substring(0, 2), 16) }, 0) / arrayOfColors.length
   const avgGreen = arrayOfColors.reduce((sum, hexString) => { return sum + parseInt(hexString.substring(2, 4), 16) }, 0) / arrayOfColors.length
@@ -67,66 +79,42 @@ async function poll() {
     ledData = []
 
     // do right side from bottom to top
-    x = width - 50;
-    y = height - 50;
+    x = width - 100;
+    y = height - 100;
     const rightSideData = [...Array(numRows - 1)].map(() => {
-      const color = robotjs.getPixelColor(x, y)
+      const color = getColorAverage(x, y)
       y -= heightSize;
       return color;
     });
     ledData = ledData.concat(rightSideData)
 
     // do top from right to left
-    x = width - 50;
-    y = 50;
-    const topData = [...Array(numCols)].map(() => {
-      const color = robotjs.getPixelColor(x, y)
+    x = width - 100;
+    y = 100;
+    const topData = [...Array(numCols - 1)].map(() => {
+      const color = getColorAverage(x, y)
       x -= widthSize;
       return color;
     });
     ledData = ledData.concat(topData)
 
     // do left from top to bottom
-    x = 50;
-    y = 50;
+    x = 100;
+    y = 100;
     const leftSideData = [...Array(numRows - 1)].map(() => {
-      const color = robotjs.getPixelColor(x, y)
+      const color = getColorAverage(x, y)
       y += heightSize;
       return color;
     });
     ledData = ledData.concat(leftSideData)
-
-    // event.sender.send('color', ledData)
     
     if (portIsOpen) {
-      const half = Math.ceil(ledData.length / 2);    
-
-      const firstHalf = ledData.splice(0, half)
-      const secondHalf = ledData.splice(-half)
-
-      firstHalfLedDataString = firstHalf.map((color, i) => {
-        const rgb = rgbFromHex(color);
-        return `${i}:${rgb[0]}:${rgb[1]}:${rgb[2]}`;
-      })
-
-      secondHalfLedDataString = secondHalf.map((color, i) => {
-        const rgb = rgbFromHex(color);
-        return `${i + firstHalf.length}:${rgb[0]}:${rgb[1]}:${rgb[2]}`;
-      })
-
-      console.log('fromjs:', firstHalfLedDataString.join('|') + "0")
-      serialPort.write(firstHalfLedDataString.join('|') + "0");
-      busy = true;
       while(busy){
-        await sleep(1);
+        console.log('waiting')
+        await sleep(20);
       }
-
-      console.log('fromjs:', secondHalfLedDataString.join('|') + "0")
-      serialPort.write(secondHalfLedDataString.join('|') + "0");
+      serialPort.write(ledData.join(''));
       busy = true;
-      while(busy){
-        await sleep(1);
-      }
     }
   };
 }

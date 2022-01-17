@@ -61,35 +61,34 @@ void loop() {
       char str_array[incomingString.length()];
       incomingString.toCharArray(str_array, incomingString.length());
 
-      Serial.println(incomingString);
-      
-      if(strcmp(str_array, "END") == 0) {
-        strip.show();
-      } else {
-        char *saveptr1, *saveptr2;
-        char * token = strtok_r(str_array, "|", &saveptr1);
-        
-        while(token != NULL) {
-          char newArray[strlen(token)];
-          strncpy(newArray, token, strlen(token));
-          
-          int index = atoi(strtok_r(newArray, ":", &saveptr2));
-          int r = atoi(strtok_r(NULL, ":", &saveptr2));
-          int g = atoi(strtok_r(NULL, ":", &saveptr2));
-          int b = atoi(strtok_r(NULL, ":", &saveptr2)) / 10;
+      // Serial.println(incomingString);
 
-//          Serial.println(index);
-//          Serial.println(r);
-//          Serial.println(g);
-//          Serial.println(b);
-//          Serial.println();
-      
-          strip.setPixelColor(index, r, g, b);  
+      int i = 0;
+      int index = 0;
+      while(i < strlen(str_array)) {
+        char *rptr;
+        char *gptr;
+        char *bptr;
+        long r;
+        long g;
+        long b;
+        char str[2];
 
-          token = strtok_r(NULL, "|", &saveptr1);
-       }
-        strip.show();
+        strncpy(str, (str_array + i), 2);
+        r = strtol(str, &rptr, 16);
+
+        strncpy(str, (str_array + i + 2), 2);
+        g = strtol(str, &gptr, 16);
+
+        strncpy(str, (str_array + i + 4), 2);
+        b = strtol(str, &bptr, 16);
+
+        strip.setPixelColor(index, r, g, b);
+        i += 6;
+        index +=1;
       }
+      
+      strip.show();
     }
     Serial.print("FREE");
   }
