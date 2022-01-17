@@ -37,16 +37,18 @@ function rgbFromHex(color) {
   return [r, g, b]
 };
 
-function getColorAverage(x, y) {
-  //const color1 = robotjs.getPixelColor(x - 25, y - 25);
-  //const color2 = robotjs.getPixelColor(x + 25, y - 25);
-  const color3 = robotjs.getPixelColor(x, y);
-  //const color4 = robotjs.getPixelColor(x - 25, y  + 25);
+function getColorAverage(x, y, screenImage, multiX, multiY) {
+  const color = screenImage.colorAt(x * multiX, y * multiY);
+
+  // const color1 = robotjs.getPixelColor(x - 25, y - 25);
+  // const color2 = robotjs.getPixelColor(x + 25, y - 25);
+  // const color3 = robotjs.getPixelColor(x, y);
+  // const color4 = robotjs.getPixelColor(x - 25, y  + 25);
   // const color5 = robotjs.getPixelColor(x + 25, y + 25);
   // const arrayOfColors = [color1, color2, color3, color4, color5];
 
   // return colorAverage(arrayOfColors)
-  return color3;
+  return color;
 }
 
 function colorAverage(arrayOfColors) {
@@ -63,16 +65,18 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function readData() {
-  console.log('reading')
-  var start = new Date().getTime();
+function readData() {
+  // var start = new Date().getTime();
+  const screenImage = robotjs.screen.capture();
+  const multiX = screenImage.width / width;
+  const multiY = screenImage.height / height;
   let x, y;
 
   // do right side from bottom to top
   x = width - 100;
   y = height - 100;
   [...Array(numRows - 1)].forEach((el, i) => {
-    const color = getColorAverage(x, y)
+    const color = getColorAverage(x, y, screenImage, multiX, multiY)
     y -= heightSize;
     ledData[i] = color;
   });
@@ -81,7 +85,7 @@ async function readData() {
   x = width - 100;
   y = 100;
   [...Array(numCols - 1)].forEach((el, i) => {
-    const color = getColorAverage(x, y)
+    const color = getColorAverage(x, y, screenImage, multiX, multiY)
     x -= widthSize;
     ledData[i + numRows - 1] = color
   });
@@ -90,39 +94,30 @@ async function readData() {
   x = 100;
   y = 100;
   [...Array(numRows - 1)].forEach((el, i) => {
-    const color = getColorAverage(x, y)
+    const color = getColorAverage(x, y, screenImage, multiX, multiY)
     y += heightSize;
       ledData[i + numRows - 2 + numCols] = color
   });
   
-  var elapsed = new Date().getTime() - start;
-  console.log("time reading", elapsed)
-
-  await sleep(20);
-
-  readData();
+  // var elapsed = new Date().getTime() - start;
+  // console.log("time reading", elapsed)
 }
 
-async function writeData() {
-  console.log('writing')
+function writeData() {
   const message = ledData.join('')
-  console.log(message)
-  var start = new Date().getTime();
+  // var start = new Date().getTime();
   serialPort.write(message, () => {
-    var elapsed = new Date().getTime() - start;
-    console.log("time write", elapsed)
+    // var elapsed = new Date().getTime() - start;
+    // console.log("time write", elapsed)
   });
-
-  await sleep(700);
-
-  writeData();
 }
 
 serialPort.on("open", async function () {
-  await Promise.all([
-    readData(),
-    writeData(),
-  ]);
+  while(true){
+    readData()
+    writeData()
+    await sleep(1);
+  }
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common

@@ -49,6 +49,7 @@ void setup() {
   strip.setBrightness(90); // Set BRIGHTNESS to about 1/5 (max = 255)
 
   Serial.begin(9600);
+  Serial.setTimeout(1);
 }
 
 
@@ -61,7 +62,7 @@ void loop() {
       char str_array[incomingString.length()];
       incomingString.toCharArray(str_array, incomingString.length());
 
-      Serial.println(incomingString);
+      // Serial.println(incomingString);
 
       int i = 0;
       int index = 0;
