@@ -99,9 +99,8 @@ void colorFade(uint8_t i, uint8_t r, uint8_t g, uint8_t b) {
       if (startR < r) startR++; else if (startR > r) startR--;  // increment or decrement the old color values
       if (startG < g) startG++; else if (startG > g) startG--;
       if (startB < b) startB++; else if (startB > b) startB--;
-      strip.setPixelColor(i, startR, startG, startB);  // set the color
-      strip.show();
-      // delay(1);  // add a delay if its too fast
+      strip.setPixelColor(i, startR, startG, startB);
+      // strip.show();
     }
 }
 

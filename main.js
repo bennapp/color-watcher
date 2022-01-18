@@ -63,7 +63,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function readData() {
+async function readDataInLoop() {
   const screenImage = robotjs.screen.capture();
   const multiX = screenImage.width / width;
   const multiY = screenImage.height / height;
@@ -109,6 +109,67 @@ async function readData() {
   }
 }
 
+async function readRandomData() {
+  let screenImage = robotjs.screen.capture();
+  const multiX = screenImage.width / width;
+  const multiY = screenImage.height / height;
+  let x, y;
+  let sampleSpace = []
+
+  // do right side from bottom to top
+  x = width - 100;
+  y = height - 100;
+  for (let i = 0; i < (numRows - 1); i++) {
+    const index = i;
+    sampleSpace[index] = [x, y];
+    y -= heightSize;
+  }
+
+  // do top from right to left
+  x = width - 100;
+  y = 100;
+  for (let i = 0; i < (numCols - 1); i++) {
+    const index = i + numRows - 1;
+    sampleSpace[index] = [x, y];
+    x -= widthSize;
+  }
+
+  // do left from top to bottom
+  x = 100;
+  y = 100;
+  for (let i = 0; i < (numRows - 1); i++) {
+    const index = i + numRows - 2 + numCols;
+    sampleSpace[index] = [x, y];
+    y += heightSize;
+  }
+
+  // console.log(sampleSpace)
+
+  let visitData = []
+  visitCount = 0
+
+  while(true) {
+    const index = Math.floor(Math.random()*sampleSpace.length)
+
+    if(!visitData[index]) {
+      const coord = sampleSpace[index];
+      x = coord[0];
+      y = coord[1];
+      const color = screenImage.colorAt(x * multiX, y * multiY);
+      writeData(color + toHex(index));
+      await sleep(1);
+      visitData[index] = true
+      visitCount += 1
+
+      if (visitCount === sampleSpace.length) {
+        visitData = []
+        visitCount = 0
+        screenImage = robotjs.screen.capture();
+      }
+    }
+  }
+}
+
 function writeData(data) {
   // console.log('writing', data)
   serialPort.write(data);
@@ -116,7 +177,8 @@ function writeData(data) {
 
 serialPort.on("open", async function () {
   while(true){
-    await readData();
+    // await readDataInLoop();
+    await readRandomData();
   }
 });
 
