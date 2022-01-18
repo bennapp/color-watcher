@@ -8,7 +8,6 @@
   },
   "dependencies": {
     "electron-rebuild": "^3.2.7",
-    "paralleljs": "^1.1.0",
     "robotjs": "^0.6.0",
     "serialport": "^9.2.8"
   },
