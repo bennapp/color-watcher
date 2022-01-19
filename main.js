@@ -143,29 +143,24 @@ async function readRandomData() {
     y += heightSize;
   }
 
-  // console.log(sampleSpace)
-
-  let visitData = []
-  visitCount = 0
+  let indexToVisit = [...Array(sampleSpace.length)].map((_, i) => i)
 
   while(true) {
-    const index = Math.floor(Math.random()*sampleSpace.length)
-
-    if(!visitData[index]) {
-      const coord = sampleSpace[index];
-      x = coord[0];
-      y = coord[1];
-      const color = screenImage.colorAt(x * multiX, y * multiY);
-      writeData(color + toHex(index));
-      await sleep(1);
-      visitData[index] = true
-      visitCount += 1
-
-      if (visitCount === sampleSpace.length) {
-        visitData = []
-        visitCount = 0
-        screenImage = robotjs.screen.capture();
-      }
+    const rand = Math.random()*indexToVisit.length;
+    const randIndex = Math.floor(rand);
+    const index = indexToVisit[randIndex];
+    indexToVisit.splice(randIndex, 1);
+    
+    const coord = sampleSpace[index];
+    x = coord[0];
+    y = coord[1];
+    const color = screenImage.colorAt(x * multiX, y * multiY);
+    writeData(color + toHex(index));
+    await sleep(1);
+    
+    if (indexToVisit.length == 0) {
+      screenImage = robotjs.screen.capture();
+      indexToVisit = [...Array(sampleSpace.length)].map((_, i) => i)
     }
   }
 }
