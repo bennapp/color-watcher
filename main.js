@@ -166,7 +166,7 @@ async function readRandomData() {
 }
 
 function writeData(data) {
-  console.log('writing', data)
+  // console.log('writing', data)
   serialPort.write(data);
 }
 
