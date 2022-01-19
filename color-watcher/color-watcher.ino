@@ -20,7 +20,7 @@
 #define LED_PIN    6
 
 // How many NeoPixels are attached to the Arduino?
-#define LED_COUNT 81
+#define LED_COUNT 78
 
 // Declare our NeoPixel strip object:
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -54,6 +54,8 @@ void setup() {
 
 const int BUFFER_SIZE = 8;
 char buf[BUFFER_SIZE];
+uint32_t stripBuff[LED_COUNT];
+uint32_t stripMem[LED_COUNT];
 
 void loop() {
   if(Serial.available()){
@@ -79,28 +81,54 @@ void loop() {
       b = strtol(str, &bptr, 16);
       strncpy(str, &buf[6], 2);
       i = strtol(str, &iptr, 16);
-
-      strip.setPixelColor(i, r, g, b);
-      // colorFade(i, r, g, b);
+      
+      stripBuff[i] = serializeColor(r, g, b);
     }
     
+    int i;
+    for (i = 0; i < LED_COUNT; i++) {
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
+      uint32_t buffColor;
+  
+      buffColor = stripBuff[i];
+      b = buffColor & 0xFF;
+      g = (buffColor >> 8) & 0xFF;
+      r = (buffColor >> 16) & 0xFF;
+  
+      colorAdjust(i, r, g, b);
+    }
+
     strip.show();
   }
 }
 
-void colorFade(uint8_t i, uint8_t r, uint8_t g, uint8_t b) {
-    uint8_t startR, startG, startB;
-    uint32_t startColor = strip.getPixelColor(i); // get the current colour
-    startB = startColor & 0xFF;
-    startG = (startColor >> 8) & 0xFF;
-    startR = (startColor >> 16) & 0xFF;  // separate into RGB components
+uint32_t serializeColor(long r, long g, long b) {
+  uint32_t color = 0;
+  color |= (r & 0xFF) << 16;
+  color |= (g & 0xFF) << 8;
+  color |= (b & 0xFF);
+  
+  return color;
+}
 
-    if ((startR != r) || (startG != g) || (startB != b)){  // while the curr color is not yet the target color
-      if (startR < r) startR++; else if (startR > r) startR--;  // increment or decrement the old color values
-      if (startG < g) startG++; else if (startG > g) startG--;
-      if (startB < b) startB++; else if (startB > b) startB--;
-      strip.setPixelColor(i, startR, startG, startB);
-      // strip.show();
+void colorAdjust(int i, uint8_t r, uint8_t g, uint8_t b) {
+    uint8_t mr, mg, mb;
+    uint32_t mColor;
+    
+    mColor = stripMem[i];
+    mb = mColor & 0xFF;
+    mg = (mColor >> 8) & 0xFF;
+    mr = (mColor >> 16) & 0xFF;
+
+    if ((mr != r) || (mg != g) || (mb != b)){
+      if (mr < r) mr++; else if (mr > r) mr--;
+      if (mg < g) mg++; else if (mg > g) mg--;
+      if (mb < b) mb++; else if (mb > b) mb--;
+
+      stripMem[i] = serializeColor(mr, mg, mb);
+      strip.setPixelColor(i, mr, mg, mb);
     }
 }
 

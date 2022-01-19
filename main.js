@@ -166,15 +166,13 @@ async function readRandomData() {
 }
 
 function writeData(data) {
-  // console.log('writing', data)
+  console.log('writing', data)
   serialPort.write(data);
 }
 
 serialPort.on("open", async function () {
-  while(true){
-    // await readDataInLoop();
-    await readRandomData();
-  }
+  await readRandomData();
+  // serialPort.write("FFFFFF00");
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
