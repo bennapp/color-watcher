@@ -13,7 +13,7 @@ serialPort.on('data', function (d) {
   console.log('Data:', data)
 })
 
-const ledDimensions = [22, 37];
+const ledDimensions = [23, 37];
 const numRows = ledDimensions[0];
 const numCols = ledDimensions[1];
 const screenSize = robotjs.getScreenSize();
