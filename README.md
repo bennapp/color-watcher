@@ -1,4 +1,4 @@
-# color-watcher
+# color-watcher (aka Ferrari Picasso)
 
 ## Desktop app that will poll your screen for colors.
 
