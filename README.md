@@ -14,7 +14,7 @@ And then I decided instead to only sample pixels around the border of the screen
 
 ![colorwatcher](https://user-images.githubusercontent.com/2433091/149700996-3b285906-9d0f-4578-87a6-166ddb252196.jpg)
 
-SO THEN! I decided to improve the I/O and add a slow color transition effect to really set the mood XD.
+SO THEN! I decided to improve the I/O and add a slow color transition effect to really set the mood XD. Check out the YouTube video below:
 
 [![Youtube video of led strip transitions](http://img.youtube.com/vi/XLQfzb2OnuU/0.jpg)](http://www.youtube.com/watch?v=XLQfzb2OnuU "Color fade ambient lighting")
 
