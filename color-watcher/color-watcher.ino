@@ -113,6 +113,21 @@ uint32_t serializeColor(long r, long g, long b) {
   return color;
 }
 
+int colorShift(int c, int mc) {
+    if(c == mc) {
+      return 0;
+    }
+    
+    int diff;
+    int delta;
+      
+    diff = c - mc;
+    delta = diff / 10;
+    if (delta == 0) delta = 1;
+    
+    return delta;
+}
+
 void colorAdjust(int i, uint8_t r, uint8_t g, uint8_t b) {
     uint8_t mr, mg, mb;
     uint32_t mColor;
@@ -123,9 +138,11 @@ void colorAdjust(int i, uint8_t r, uint8_t g, uint8_t b) {
     mr = (mColor >> 16) & 0xFF;
 
     if ((mr != r) || (mg != g) || (mb != b)){
-      if (mr < r) mr++; else if (mr > r) mr--;
-      if (mg < g) mg++; else if (mg > g) mg--;
-      if (mb < b) mb++; else if (mb > b) mb--;
+      
+
+      mr += colorShift(r, mr);
+      mg += colorShift(g, mg);
+      mb += colorShift(b, mb);
 
       stripMem[i] = serializeColor(mr, mg, mb);
       strip.setPixelColor(i, mr, mg, mb);
