@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, powerMonitor } = require('electron')
 const path = require('path')
 const robotjs = require('robotjs')
 const ipc = require("electron").ipcMain;
@@ -6,13 +6,7 @@ const SerialPort = require('serialport');
 
 app.allowRendererProcessReuse = false;
 
-const serialPort = new SerialPort('COM4', { baudRate: 9600 });
-
-serialPort.on('data', function (d) {
-  const data = String(d)
-  console.log('Data:', data)
-})
-
+let serialPort;
 const ledDimensions = [23, 37];
 const numRows = ledDimensions[0];
 const numCols = ledDimensions[1];
@@ -63,22 +57,16 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function readDataInLoop() {
-  const screenImage = robotjs.screen.capture();
-  const multiX = screenImage.width / width;
-  const multiY = screenImage.height / height;
+async function writeBlanks() {
   let x, y;
 
   // do right side from bottom to top
   x = width - 100;
   y = height - 100;
   for (let i = 0; i < (numRows - 1); i++) {
-    const color = getColorAverage(x, y, screenImage, multiX, multiY)
     const index = i;
-    
-    writeData(color + toHex(index));
+    writeData('000000', toHex(index));
     await sleep(1);
-
     y -= heightSize;
   }
 
@@ -86,12 +74,9 @@ async function readDataInLoop() {
   x = width - 100;
   y = 100;
   for (let i = 0; i < (numCols - 1); i++) {
-    const color = getColorAverage(x, y, screenImage, multiX, multiY)
     const index = i + numRows - 1;
-    
-    writeData(color + toHex(index));
+    writeData('000000', toHex(index));
     await sleep(1);
-
     x -= widthSize;
   }
 
@@ -99,12 +84,9 @@ async function readDataInLoop() {
   x = 100;
   y = 100;
   for (let i = 0; i < (numRows - 1); i++) {
-    const color = getColorAverage(x, y, screenImage, multiX, multiY)
     const index = i + numRows - 2 + numCols;
-    
-    writeData(color + toHex(index));
+    writeData('000000', toHex(index));
     await sleep(1);
-
     y += heightSize;
   }
 }
@@ -155,7 +137,7 @@ async function readRandomData() {
     x = coord[0];
     y = coord[1];
     const color = screenImage.colorAt(x * multiX, y * multiY);
-    writeData(color + toHex(index));
+    writeData(color, toHex(index));
     await sleep(1);
     
     if (indexToVisit.length == 0) {
@@ -165,59 +147,37 @@ async function readRandomData() {
   }
 }
 
-function writeData(data) {
-  // console.log('writing', data)
-  serialPort.write(data);
+function writeData(color, index) {
+  serialPort.write(color + index);
 }
 
-serialPort.on("open", async function () {
-  await readRandomData();
-  // serialPort.write("FFFFFF00");
-});
+async function readSerialPort() {
+  while(true) {
+    try {
+      await readRandomData();
+    } catch (error) {
+      console.error(error);
+    }
+    await sleep(3000);
+  }
+}
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
-})
+function initializeSerialPort() {
+  serialPort = new SerialPort('COM4', { baudRate: 9600 });
+  
+  serialPort.on("open", readSerialPort);
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+  serialPort.on('data', function (d) {
+    const data = String(d)
+    console.log('Data:', data)
+  })
+}
 
-// ipc.on('start', event => {
-//   event.sender.send('screenSize', numRows, numCols);
-// })
+app.on('ready', initializeSerialPort);
 
+powerMonitor.on('resume', readSerialPort);
+powerMonitor.on('unlock-screen', readSerialPort);
 
-// function createWindow () {
-  // Create the browser window.
-  // const mainWindow = new BrowserWindow({
-  //   width: 1200,
-  //   height: 800,
-  //   webPreferences: {
-  //     preload: path.join(__dirname, 'preload.js'),
-  //     nodeIntegration: true,
-  //     contextIsolation: false,
-  //   }
-  // })
-
-  // and load the index.html of the app.
-  // mainWindow.loadFile('index.html')
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
-// }
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-// app.whenReady().then(() => {
-  // createWindow()
-
-  // app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    // if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  // })
-// })
+app.on('before-quit', writeBlanks);
+powerMonitor.on('shutdown', writeBlanks);
+powerMonitor.on('suspend', writeBlanks);
