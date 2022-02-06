@@ -163,7 +163,7 @@ async function readSerialPort() {
 }
 
 function initializeSerialPort() {
-  serialPort = new SerialPort('COM4', { baudRate: 9600 });
+  serialPort = new SerialPort('COM5', { baudRate: 9600 });
   
   serialPort.on("open", readSerialPort);
 
