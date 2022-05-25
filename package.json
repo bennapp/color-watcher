@@ -4,14 +4,15 @@
   "main": "main.js",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^16.0.7"
+    "electron": "^16.0.7",
+    "electron-rebuild": "^3.2.7"
   },
   "dependencies": {
-    "electron-rebuild": "^3.2.7",
     "robotjs": "^0.6.0",
     "serialport": "^9.2.8"
   },
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build-win": "electron-builder build --win"
   }
 }
