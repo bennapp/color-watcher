@@ -11,10 +11,6 @@ app.allowRendererProcessReuse = false;
 const screenSize = robotjs.getScreenSize();
 const width = screenSize.width;
 const height = screenSize.height;
-const minWidth = 700;
-const maxWidth = 1900;
-const minHeight = 400;
-const maxHeight = 1200;
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -37,19 +33,21 @@ function findGreenSquare() {
   const multiX = screenImage.width / width;
   const multiY = screenImage.height / height;
 
-  for (let i = minWidth; i < maxWidth; i += getRandomInt(25, 150)) {
-    for (let j = minHeight; j < maxHeight; j += getRandomInt(25, 150)) {
+  for (let i = 0; i < width; i += (150 + getRandomInt(0, 50))) {
+    for (let j = 0; j < height; j += (150 + getRandomInt(0, 60))) {
+
+      const startTime = new Date().getTime()
       color = getColor(i, j, screenImage, multiX, multiY);
+      const endTime = new Date().getTime()
+      console.log(startTime - endTime);
+      
 
-      // blue == mark of grace
-      if (color === '0000ff') {
-        return [i, j];
-      }
-
-      // purple == next obs
-      // TODO figure out falling off
+      // purple?
       if (color === 'ff00ff') {
+        // nextOver = getColor(i + 10, j + 10, screenImage, multiX, multiY);
+        // if (nextOver === 'ff00ff') {
         return [i, j];
+        // }
       }
     }
   }
@@ -58,32 +56,30 @@ function findGreenSquare() {
 }
 
 async function runLoop() {
-  while (true) {
-    const startTime = new Date().getTime()
+  while(true) {
+    // const startTime = new Date().getTime()
+    console.log('wahat?')
     const coords = findGreenSquare();
     let i = coords[0];
     let j = coords[1];
 
-    // console.log(i, j)
+    console.log(i, j)
     if (i > 0 && j > 0) {
-      const clickX = i;
-      const clickY = j;
+      const clickX = i + getRandomInt(0, 10);
+      const clickY = j + getRandomInt(0, 10);
 
       robotjs.moveMouse(clickX, clickY);
-      await sleep(getRandomInt(75, 100));
       robotjs.mouseClick();
 
-      const endTime = new Date().getTime()
-      const durationMilli = endTime - startTime;
+      // const endTime = new Date().getTime()
+      // const durationMilli = endTime - startTime;
+      // const waitTime = 6740;
+      // const maxRunTime = 6610;
+      // const timeDiff = waitTime - durationMilli;
+      // const sleepTime = timeDiff > maxRunTime ? timeDiff : maxRunTime;
+      // console.log(sleepTime);
 
-      console.log(durationMilli)
-
-      const waitTime = 6740;
-      const maxRunTime = 6610;
-      const timeDiff = waitTime - durationMilli;
-      const sleepTime = timeDiff > maxRunTime ? timeDiff : maxRunTime;
-
-      await sleep(sleepTime + getRandomInt(0, 1000));
+      // await sleep(sleepTime + getRandomInt(0, 1000));
     }
   }
 }
