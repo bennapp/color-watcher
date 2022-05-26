@@ -12,9 +12,15 @@ const screenSize = robotjs.getScreenSize();
 const width = screenSize.width;
 const height = screenSize.height;
 const minWidth = 700;
-const maxWidth = 1900;
+const maxWidth = 2000;
 const minHeight = 400;
 const maxHeight = 1200;
+
+const nextObsColor = 'ff00ff';
+const mogColor = '0000ff';
+const onDColor = 'ffff00';
+const onDTimeout = 4000;
+const noYTimeout = 7000;
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -32,23 +38,32 @@ function getColor(x, y, screenImage, multiX, multiY) {
   return color;
 }
 
-function findGreenSquare() {
+function findSpot(seekColor, nexti, nextj) {
   let screenImage = robotjs.screen.capture();
   const multiX = screenImage.width / width;
   const multiY = screenImage.height / height;
+  
+  if (nexti && nextj) {
+    const starti = nexti - 300;
+    const startj = nextj - 300;
+
+    for (let i = starti; i < starti + 500; i += getRandomInt(25, 150)) {
+      for (let j = startj; j < startj + 500; j += getRandomInt(25, 150)) {
+        color = getColor(i, j, screenImage, multiX, multiY);
+
+        if (color === mogColor || color === seekColor) {
+          console.log('used yellow shortcut!');
+          return [i, j];
+        }
+      }
+    }
+  }
 
   for (let i = minWidth; i < maxWidth; i += getRandomInt(25, 150)) {
     for (let j = minHeight; j < maxHeight; j += getRandomInt(25, 150)) {
       color = getColor(i, j, screenImage, multiX, multiY);
 
-      // blue == mark of grace
-      if (color === '0000ff') {
-        return [i, j];
-      }
-
-      // purple == next obs
-      // TODO figure out falling off
-      if (color === 'ff00ff') {
+      if (color === mogColor || color === seekColor) {
         return [i, j];
       }
     }
@@ -58,9 +73,13 @@ function findGreenSquare() {
 }
 
 async function runLoop() {
+  let nexti;
+  let nextj;
+
   while (true) {
     const startTime = new Date().getTime()
-    const coords = findGreenSquare();
+    console.log('seeking purp', nexti, nextj);
+    const coords = findSpot(nextObsColor, nexti, nextj);
     let i = coords[0];
     let j = coords[1];
 
@@ -73,17 +92,46 @@ async function runLoop() {
       await sleep(getRandomInt(75, 100));
       robotjs.mouseClick();
 
-      const endTime = new Date().getTime()
-      const durationMilli = endTime - startTime;
+      while (true) {
+        const endTime = new Date().getTime()
+        const durationMilli = endTime - startTime;
 
-      console.log(durationMilli)
+        console.log('seeking no yellow')
 
-      const waitTime = 6740;
-      const maxRunTime = 6610;
-      const timeDiff = waitTime - durationMilli;
-      const sleepTime = timeDiff > maxRunTime ? timeDiff : maxRunTime;
+        const nextCoords = findSpot(onDColor);
+        possibleOnDi = nextCoords[0];
+        possibleOnDj = nextCoords[1];
 
-      await sleep(sleepTime + getRandomInt(0, 1000));
+        if (durationMilli > noYTimeout || possibleOnDi != -1) {
+          console.log('breaking yellow no search')
+          break;
+        }
+      }
+
+      while(true) {
+        const endTime = new Date().getTime()
+        const durationMilli = endTime - startTime;
+
+        console.log('seeking yellow')
+        
+        const nextCoords = findSpot(onDColor);
+        possibleOnDi = nextCoords[0];
+        possibleOnDj = nextCoords[1];
+        console.log('next coords?', nextCoords)
+
+        if (possibleOnDi > 0) {
+          nexti = possibleOnDi;
+          nextj = possibleOnDj;
+          console.log('set next yellow coords', nexti, nextj)
+        }
+
+        if (durationMilli > onDTimeout || possibleOnDi == -1) {
+          console.log('breaking yellow search')
+          break;
+        }
+      }
+
+      await sleep(getRandomInt(25, 100));
     }
   }
 }
